@@ -1,0 +1,30 @@
+---
+Type: "AWS::DynamoDB::Table"
+Properties:
+  AttributeDefinitions:
+    - AttributeName: userId
+      AttributeType: S
+    - AttributeName: itemId
+      AttributeType: S
+    - AttributeName: field
+      AttributeType: S
+  KeySchema:
+    - AttributeName: userId
+      KeyType: HASH
+    - AttributeName: itemId
+      KeyType: RANGE
+  GlobalSecondaryIndexes:
+    - IndexName: user_x_field
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: field
+          KeyType: RANGE
+      Projection:
+        ProjectionType: ALL
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  ProvisionedThroughput:
+    ReadCapacityUnits: 1
+    WriteCapacityUnits: 1

@@ -1,0 +1,23 @@
+{
+  "name": "graphql-resume",
+  "version": "1.0.0",
+  "description": "A GraphQL API for editing and viewing my resume",
+  "main": "",
+  "scripts": {
+    "test": "echo \"No Tests Yet\" && exit 1",
+    "lint": "standard",
+    "fixStyle": "standard --fix",
+    "devDeploy": "sls deploy --stage dev",
+    "prodDeploy": "sls deploy --stage prod"
+  },
+  "author": "Justin L Martin",
+  "dependencies": {
+    "graphql": "~14.5.7",
+    "lodash": "~4.17.15",
+    "uuid": "~3.3.3",
+    "aws-sdk": "~2.36.0"
+  },
+  "devDependencies": {
+    "standard": "*"
+  }
+}
