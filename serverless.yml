@@ -1,6 +1,6 @@
 service: graphql-resume
 
-frameworkVersion: ">=1.9.0 <2.0.0"
+frameworkVersion: "1.11.0"
 
 custom:
   stage: ${opt:stage, self:provider.stage}
@@ -12,7 +12,7 @@ provider:
   runtime: nodejs8.10
   environment:
     RESUME_DB: {Ref: ResumeDB}
-    COGNITO_POOL_ARN: '${self:custom.environment.COGNITO_POOL_ARN}'
+    COGNITO_POOL_ARN: ${self:custom.environment.COGNITO_POOL_ARN}
   iamRoleStatements:
     - Effect: Allow
       Resource:
@@ -32,7 +32,7 @@ provider:
               - {Ref: "AWS::AccountId"}
               - ":table/"
               - Ref: ResumeDB
-              - '/index/*'
+              - "/index/*"
       Action:
         - dynamodb:GetItem
         - dynamodb:PutItem
@@ -49,7 +49,7 @@ functions:
           cors: true
           authorizer:
             name: pool_auth
-            arn: '${self:provider.environment.COGNITO_POOL_ARN}'
+            arn: ${self:provider.environment.COGNITO_POOL_ARN}
           path: /test-auth
           method: get
   graph-ql:
@@ -59,7 +59,7 @@ functions:
           cors: true
           authorizer:
             name: pool_auth
-            arn: '${self:provider.environment.COGNITO_POOL_ARN}'
+            arn: ${self:provider.environment.COGNITO_POOL_ARN}
           path: /graph-ql
           method: post
       - http:
