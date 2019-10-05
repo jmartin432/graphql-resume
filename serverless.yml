@@ -49,8 +49,7 @@ functions:
           cors: true
           authorizer:
             name: pool_auth
-#            arn: ${self:provider.environment.COGNITO_POOL_ARN}
-              arn: ${env:COGNITO_POOL_ARN}
+            arn: ${env:COGNITO_POOL_ARN}
           path: /test-auth
           method: get
   graph-ql:
@@ -60,7 +59,6 @@ functions:
           cors: true
           authorizer:
             name: pool_auth
-#            arn: ${self:provider.environment.COGNITO_POOL_ARN}
             arn: ${env:COGNITO_POOL_ARN}
           path: /graph-ql
           method: post
