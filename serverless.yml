@@ -6,6 +6,7 @@ custom:
   stage: ${opt:stage, self:provider.stage}
   environment: ${file(env.yml):${self:custom.stage}, file(env.yml):default}
 #  
+#
 #  cognitoPoolArn: ${self:custom.environment.stripeSecretKey}
 #  devCognitoPool: ${file(arn.json):dev.cognitoPool}
 #  prodCognitoPool: ${file(arn.json):prod.cognitoPool}
