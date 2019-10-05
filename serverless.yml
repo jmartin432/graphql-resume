@@ -4,7 +4,7 @@ frameworkVersion: ">=1.53.0 <2.0.0"
 
 custom:
   stage: ${opt:stage, self:provider.stage}
-  environment: ${file(env.yml):${self:custom.stage}, file(env.yml):default}
+  environment: ${file(env.yml):${self:custom.stage}, env}
 
 provider:
   name: aws
@@ -12,7 +12,7 @@ provider:
   runtime: nodejs8.10
   environment:
     RESUME_DB: {Ref: ResumeDB}
-    COGNITO_POOL_ARN: ${self:custom.environment.COGNITO_POOL_ARN, env:COGNITO_POOL_ARN}
+    COGNITO_POOL_ARN: ${self:custom.environment.COGNITO_POOL_ARN}
   iamRoleStatements:
     - Effect: Allow
       Resource:
@@ -49,7 +49,8 @@ functions:
           cors: true
           authorizer:
             name: pool_auth
-            arn: ${env:COGNITO_POOL_ARN}
+            arn: ${self:provider.environment.COGNITO_POOL_ARN}
+#            arn: ${env:COGNITO_POOL_ARN}
           path: /test-auth
           method: get
   graph-ql:
@@ -59,7 +60,8 @@ functions:
           cors: true
           authorizer:
             name: pool_auth
-            arn: ${env:COGNITO_POOL_ARN}
+            arn: ${self:provider.environment.COGNITO_POOL_ARN}
+#            arn: ${env:COGNITO_POOL_ARN}
           path: /graph-ql
           method: post
       - http:
