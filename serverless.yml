@@ -1,6 +1,6 @@
 service: graphql-resume
 
-frameworkVersion: "1.11.0"
+frameworkVersion: ">=1.53.0 <2.0.0"
 
 custom:
   stage: ${opt:stage, self:provider.stage}
