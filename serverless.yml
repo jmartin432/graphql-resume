@@ -5,9 +5,6 @@ frameworkVersion: ">=1.9.0 <2.0.0"
 custom:
   stage: ${opt:stage, self:provider.stage}
   environment: ${file(env.yml):${self:custom.stage}, file(env.yml):default}
-#  cognitoPoolArn: ${self:custom.environment.stripeSecretKey}
-#  devCognitoPool: ${file(arn.json):dev.cognitoPool}
-#  prodCognitoPool: ${file(arn.json):prod.cognitoPool}
 
 provider:
   name: aws
@@ -15,7 +12,7 @@ provider:
   runtime: nodejs8.10
   environment:
     RESUME_DB: {Ref: ResumeDB}
-    cognitoPoolArn: '${self:custom.environment.cognitoPoolArn}'
+    COGNITO_POOL_ARN: '${self:custom.environment.COGNITO_POOL_ARN}'
   iamRoleStatements:
     - Effect: Allow
       Resource:
