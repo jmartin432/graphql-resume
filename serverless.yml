@@ -4,6 +4,7 @@ frameworkVersion: ">=1.9.0 <2.0.0"
 
 custom:
   stage: ${opt:stage, self:provider.stage}
+  environment: ${file(env.yml):${self:custom.stage}, file(env.yml):default}
 #  cognitoPoolArn: ${self:custom.environment.stripeSecretKey}
 #  devCognitoPool: ${file(arn.json):dev.cognitoPool}
 #  prodCognitoPool: ${file(arn.json):prod.cognitoPool}
@@ -14,6 +15,7 @@ provider:
   runtime: nodejs8.10
   environment:
     RESUME_DB: {Ref: ResumeDB}
+    cognitoPoolArn: ${self:custom.environment.cognitoPoolArn}
   iamRoleStatements:
     - Effect: Allow
       Resource:
@@ -50,7 +52,7 @@ functions:
           cors: true
           authorizer:
             name: pool_auth
-            arn: COGNITO_POOL_ARN
+            arn: cognitoPoolArn
           path: /test-auth
           method: get
   graph-ql:
@@ -60,7 +62,7 @@ functions:
           cors: true
           authorizer:
             name: pool_auth
-            arn: COGNITO_POOL_ARN
+            arn: cognitoPoolArn
           path: /graph-ql
           method: post
       - http:
