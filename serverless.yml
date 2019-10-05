@@ -12,7 +12,7 @@ provider:
   runtime: nodejs8.10
   environment:
     RESUME_DB: {Ref: ResumeDB}
-    COGNITO_POOL_ARN: ${self:custom.environment.COGNITO_POOL_ARN, env:COGNITO_POOL_ARN}
+    COGNITO_POOL_ARN: ${self:custom.environment.COGNITO_POOL_ARN, process.env:COGNITO_POOL_ARN}
   iamRoleStatements:
     - Effect: Allow
       Resource:
