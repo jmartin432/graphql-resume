@@ -51,6 +51,13 @@ const itemConfigFields = {
   }
 }
 
+const userType = new graphQl.GraphQLObjectType({
+  name: 'User',
+  fields: {
+    userId: graphQl.GraphQLString
+  }
+});
+
 const itemType = new graphQl.GraphQLObjectType({
   name: 'Item',
   fields: itemConfigFields
@@ -62,6 +69,7 @@ const inputItemType = new graphQl.GraphQLInputObjectType({
 });
 
 module.exports = {
+  UserType: userType,
   ItemType: itemType,
-  InputItemType: inputItemType,
+  InputItemType: inputItemType
 };

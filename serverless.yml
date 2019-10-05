@@ -4,8 +4,9 @@ frameworkVersion: ">=1.9.0 <2.0.0"
 
 custom:
   stage: ${opt:stage, self:provider.stage}
-  devCognitoPool: ${file(arn.json):cognitoPool.dev}
-  prodCognitoPool: ${file(arn.json):cognitoPool.prod}
+#  cognitoPoolArn: ${self:custom.environment.stripeSecretKey}
+#  devCognitoPool: ${file(arn.json):dev.cognitoPool}
+#  prodCognitoPool: ${file(arn.json):prod.cognitoPool}
 
 provider:
   name: aws
@@ -49,7 +50,7 @@ functions:
           cors: true
           authorizer:
             name: pool_auth
-            arn: '${self:custom.${self:custom.stage}CognitoPool}'
+            arn: COGNITO_POOL_ARN
           path: /test-auth
           method: get
   graph-ql:
@@ -59,7 +60,7 @@ functions:
           cors: true
           authorizer:
             name: pool_auth
-            arn: '${self:custom.${self:custom.stage}CognitoPool}'
+            arn: COGNITO_POOL_ARN
           path: /graph-ql
           method: post
       - http:
