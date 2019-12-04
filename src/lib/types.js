@@ -54,7 +54,7 @@ const itemConfigFields = {
 const userType = new graphQl.GraphQLObjectType({
   name: 'User',
   fields: {
-    userId: graphQl.GraphQLString
+    user: graphQl.GraphQLString
   }
 });
 

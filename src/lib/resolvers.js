@@ -41,6 +41,10 @@ function buildItem(userId, itemId, args) {
   }
 }
 
+function resolveUsers (context, args){
+  logResolver('USERS', context, args);
+}
+
 function resolveItem (context, args) {
   logResolver('ITEM', context, args);
   let userId = null

@@ -15,6 +15,11 @@ const queries = new graphQl.GraphQLObjectType({
         return 'pong'
       }
     },
+    users:{
+      type: graphQl.GraphQLList(graphQl.GraphQLString),
+      args: {},
+      resolve: resolvers.resolveUsers
+    },
     item: {
       type: types.ItemType,
       args: {
