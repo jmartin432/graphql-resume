@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: The AWS CloudFormation Template for Initializing S3 Buckets
+
+Parameters:
+  Region:
+    Type: String
+    Default: us-west-2
+  TimeStamp:
+    Type: String
+  AccountId:
+    Type: String
+    Default: '{{resolve:ssm:Account-ID:1}}'
+  Stage:
+    Type: String
+    AllowedValues:
+      - dev
+      - prod
+    Default: dev
+    Description: Stage
+  ServiceName:
+    Type: String
+    Default: graphql-resume
+
+Mappings:
+  DeploymentBucketMap:
+    dev:
+      Name: '{{resolve:ssm:GraphQL-Resume-Deployment-Bucket-Dev:1}}'
+    prod:
+      Name: '{{resolve:ssm:GraphQL-Resume-Deployment-Bucket-Prod:1}}'
+
+Resources:
+  GraphQlResumeDeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::FindInMap:
+          - DeploymentBucketMap
+          - Ref: Stage
+          - Name
+      VersioningConfiguration:
+        Status: Suspended
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+Outputs:
+  GraphQlResumeDeploymentBucketName:
+    Value: !Ref GraphQlResumeDeploymentBucket

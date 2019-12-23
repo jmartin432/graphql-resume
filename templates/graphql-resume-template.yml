@@ -1,0 +1,463 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: The AWS CloudFormation template for GraphQL Resume
+
+Parameters:
+  Region:
+    Type: String
+    Default: us-west-1
+  TimeStamp:
+    Type: String
+  AccountId:
+    Type: String
+    Default: '{{resolve:ssm:Account-ID:1}}'
+  Stage:
+    Type: String
+    AllowedValues:
+      - dev
+      - prod
+    Default: dev
+    Description: Stage
+  ServiceName:
+    Type: String
+    Default: graphql-resume
+  SslCert:
+    Type: String
+    Default: '{{resolve:ssm:Static-Sites-SSL-Cert-ARN:1}}'
+
+Mappings:
+  DeploymentBucketMap:
+    dev:
+      Name: '{{resolve:ssm:GraphQl-Resume-Deployment-Bucket-Dev:1}}'
+    prod:
+      Name: '{{resolve:ssm:GraphQl-Resume-Deployment-Bucket-Prod:1}}'
+  CognitoPoolArnMap:
+    dev:
+      Name: test
+#      Name: '{{resolve:ssm:GraphQl-Resume-Cognito-Pool-Arn-Dev:1}}'
+    prod:
+      Name: test
+#      Name: '{{resolve:ssm:GraphQl-Resume-Cognito-Pool-Arn-Prod:1}}'
+
+Resources:
+  GraphQlResumeDeploymentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !FindInMap [DeploymentBucketMap, !Ref Stage, Name]
+      VersioningConfiguration:
+        Status: Suspended
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  TestAuthLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/graphql-resume-test-auth-${Stage}
+
+  ResumeHandlerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/graphql-resume-handler-${Stage}
+
+  ResumeDb:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub graphql-resume-${Stage}-table
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: itemId
+          AttributeType: S
+        - AttributeName: field
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: itemId
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: user_x_field
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: field
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  IamRoleLambdaExecution:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+             - sts:AssumeRole
+      Policies:
+        - PolicyName: graphql-resume-lambda
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: AllowCreateLogStream
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                Resource:
+                  - !Sub
+                    - ${ResumeHandlerLogGroupArn}*:*
+                    - { ResumeHandlerLogGroupArn: !GetAtt ResumeHandlerLogGroup.Arn }
+                  - !Sub
+                    - ${TestAuthLogGroupArn}*:*:*
+                    - { TestAuthLogGroupArn: !GetAtt TestAuthLogGroup.Arn }
+              - Sid: AllowLogEvent
+                Effect: Allow
+                Action:
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub
+                    - ${ResumeHandlerLogGroupArn}*:*:*
+                    - { ResumeHandlerLogGroupArn: !GetAtt ResumeHandlerLogGroup.Arn }
+                  - !Sub
+                    - ${TestAuthLogGroupArn}*:*:*
+                    - { TestAuthLogGroupArn: !GetAtt TestAuthLogGroup.Arn }
+              - Sid: DynamoAccess
+                Effect: Allow
+                Resource:
+                  - !GetAtt ResumeDb.Arn
+                  - !Sub
+                      - ${ResumeDbArn}/index/*
+                      - { ResumeDbArn: !GetAtt ResumeDb.Arn}
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Scan
+                  - dynamodb:Query
+      Path: /
+      RoleName: graphql-resume-lambda-role
+
+  TestAuthLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Ref GraphQlResumeDeploymentBucket
+        S3Key: !Sub ${TimeStamp}/lambdas${TimeStamp}.zip
+      FunctionName: graphql-resume-dev-test-auth
+      Handler: lambdas/test-auth.handler
+      MemorySize: 1024
+      Role: !GetAtt IamRoleLambdaExecution.Arn
+      Runtime: nodejs10.x
+      Timeout: 6
+      Environment:
+        Variables:
+          RESUME_DB: !Ref ResumeDb
+          COGNITO_POOL_ARN: !FindInMap [CognitoPoolArnMap, !Ref Stage, Name]
+    DependsOn:
+      - TestAuthLogGroup
+      - IamRoleLambdaExecution
+
+  TestAuthLambdaVersion:
+    Type: AWS::Lambda::Version
+    DeletionPolicy: Retain
+    Properties:
+      FunctionName: !Ref TestAuthLambdaFunction
+      Description: Test authorization for GraphQl API
+
+  ResumeHandlerLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: !Ref GraphQlResumeDeploymentBucket
+        S3Key: !Sub ${TimeStamp}/lambdas${TimeStamp}.zip
+      FunctionName: graphql-resume-dev-handler
+      Handler: lambdas/graph-ql.handler
+      MemorySize: 1024
+      Role: !GetAtt IamRoleLambdaExecution.Arn
+      Runtime: nodejs10.x
+      Timeout: 6
+      Environment:
+        Variables:
+          RESUME_DB: !Ref ResumeDb
+          COGNITO_POOL_ARN: !FindInMap [CognitoPoolArnMap, !Ref Stage, Name]
+    DependsOn:
+      - TestAuthLogGroup
+      - IamRoleLambdaExecution
+
+  ResumeHandlerLambdaVersion:
+    Type: AWS::Lambda::Version
+    DeletionPolicy: Retain
+    Properties:
+      FunctionName: !Ref ResumeHandlerLambdaFunction
+      Description: Resume handler for GraphQl API
+
+  ApiGatewayRestApi:
+     Type: AWS::ApiGateway::RestApi
+     Properties:
+       Name: graphql-resume-api-dev
+       EndpointConfiguration:
+         Types:
+           - EDGE
+
+  ApiGatewayResourceTestAuth:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+      PathPart: test-auth
+      RestApiId:
+        Ref: ApiGatewayRestApi
+
+  ApiGatewayResourceResumeHandler:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+      PathPart: resume-handler
+      RestApiId:
+        Ref: ApiGatewayRestApi
+
+  ApiGatewayResourceReadResumeHandler:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+      PathPart: read-resume-handler
+      RestApiId:
+        Ref: ApiGatewayRestApi
+
+  ApiGatewayMethodTestAuthOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+        StatusCode: 200
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Origin: true
+          method.response.header.Access-Control-Allow-Headers: true
+          method.response.header.Access-Control-Allow-Methods: true
+          method.response.header.Access-Control-Allow-Credentials: true
+        ResponseModels:
+      RequestParameters:
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: statusCode:200
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: '*'
+            method.response.header.Access-Control-Allow-Headers: 'Content-TypeX-Amz-DateAuthorizationX-Api-KeyX-Amz-Security-TokenX-Amz-User-Agent'
+            method.response.header.Access-Control-Allow-Methods: 'OPTIONSGET'
+            method.response.header.Access-Control-Allow-Credentials: 'false'
+          ResponseTemplates:
+            application/json: #set($origin = $input.params(\Origin\))\n#if($origin == \\) #set($origin = $input.params(\origin\)) #end\n#if($origin.matches(\.*\)) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end
+      ResourceId: !Ref ApiGatewayResourceTestAuth
+      RestApiId: !Ref ApiGatewayRestApi
+
+  ApiGatewayMethodResumeHandlerOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      MethodResponses:
+        StatusCode: 200
+        ResponseParameters:
+          - method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Credentials: true
+        ResponseModels:
+      RequestParameters:
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: statusCode:200
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          StatusCode: 200
+          ResponseParameters:
+            - method.response.header.Access-Control-Allow-Origin: *
+              method.response.header.Access-Control-Allow-Headers: Content-TypeX-Amz-DateAuthorizationX-Api-KeyX-Amz-Security-TokenX-Amz-User-Agent
+              method.response.header.Access-Control-Allow-Methods:
+               - OPTIONS
+               - POST
+              method.response.header.Access-Control-Allow-Credentials: false
+          ResponseTemplates:
+            application/json: #set($origin = $input.params(\Origin\))\n#if($origin == \\) #set($origin = $input.params(\origin\)) #end\n#if($origin.matches(\.*\)) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end
+      ResourceId: !Ref ApiGatewayResourceResumeHandler
+      RestApiId: !Ref ApiGatewayRestApi
+
+  ApiGatewayMethodReadResumeHandlerOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      MethodResponses:
+        StatusCode: 200
+        ResponseParameters:
+          - method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Credentials: true
+        ResponseModels:
+      RequestParameters:
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: statusCode:200
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          StatusCode: 200
+          ResponseParameters:
+            - method.response.header.Access-Control-Allow-Origin: *
+              method.response.header.Access-Control-Allow-Headers: Content-TypeX-Amz-DateAuthorizationX-Api-KeyX-Amz-Security-TokenX-Amz-User-Agent
+              method.response.header.Access-Control-Allow-Methods:
+               - OPTIONS
+               - POST
+              method.response.header.Access-Control-Allow-Credentials: false
+          ResponseTemplates:
+            application/json: #set($origin = $input.params(\Origin\))\n#if($origin == \\) #set($origin = $input.params(\origin\)) #end\n#if($origin.matches(\.*\)) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end
+      ResourceId: !Ref ApiGatewayResourceReadResumeHandler
+      RestApiId: !Ref ApiGatewayRestApi
+
+  ApiGatewayMethodTestAuthGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: GET
+      RequestParameters:
+      ResourceId: !Ref ApiGatewayResourceTestAuth
+      RestApiId: !Ref ApiGatewayRestApi
+      ApiKeyRequired: false
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref PoolAuthApiGatewayAuthorizer
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          - !Sub
+            - arn:aws:apigateway:${Region}:lambda:path/2015-03-31/functions/${TestAuthLambdaArn}/invocations
+            - { TestAuthLambdaArn: !GetAtt TestAuthLambda.Arn }
+      MethodResponses:
+    DependsOn: PoolAuthApiGatewayAuthorizer
+
+
+  ApiGatewayMethodResumeHandlerPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: POST
+      RequestParameters:
+      ResourceId: !Ref ApiGatewayResourceResumeHandler
+      RestApiId: !Ref ApiGatewayRestApi
+      ApiKeyRequired: false
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref PoolAuthApiGatewayAuthorizer
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          - !Sub
+            - arn:aws:apigateway:${Region}:lambda:path/2015-03-31/functions/${ResumeHandlerLambdaArn}/invocations
+            - { ResumeHandlerLambdaArn: !GetAtt ResumeHandlerLambda.Arn }
+      MethodResponses:
+    DependsOn: PoolAuthApiGatewayAuthorizer
+
+  ApiGatewayMethodReadResumeHandlerPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: POST
+      RequestParameters:
+      ResourceId: !Ref ApiGatewayResourceReadResumeHandler
+      RestApiId: !Ref ApiGatewayRestApi
+      ApiKeyRequired: false
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          - !Sub
+            - arn:aws:apigateway:${Region}:lambda:path/2015-03-31/functions/${ResumeHandlerLambdaArn}/invocations
+            - { ResumeHandlerLambdaArn: !GetAtt ResumeHandlerLambda.Arn }
+      MethodResponses:
+
+  PoolAuthApiGatewayAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      AuthorizerResultTtlInSeconds: 300
+      IdentitySource: method.request.header.Authorization
+      Name: pool_auth
+      RestApiId: !Ref ApiGatewayRestApi
+      Type: COGNITO_USER_POOLS
+      ProviderARNs: !FindInMap [CognitoPoolArnMap, !Ref Stage, Name]
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref ApiGatewayRestApi
+      StageName: !Ref Stage
+    DependsOn:
+      - ApiGatewayMethodTestAuthOptions
+      - ApiGatewayMethodResumeHandlerOptions
+      - ApiGatewayMethodReadResumehandlerOptions
+      - ApiGatewayMethodTestAuthGet
+      - ApiGatewayMethodResumeHandlerPost
+      - ApiGatewayMethodReadResumeHandlerPost
+
+  TestAuthLambdaPermissionApiGateway:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt TestAuthLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        - !Sub
+          - arn:aws:execute-api:${Region}:${AccountId}:${ApiGateway}/*/*
+          - !Ref ApiGatewayRestApi
+
+  ResumeHandlerLambdaPermissionApiGateway:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt ResumeHandlerLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        - !Sub
+          - arn:aws:execute-api:${Region}:${AccountId}:${ApiGateway}/*/*
+          - !Ref ApiGatewayRestApi
+
+Outputs:
+  GraphQlResumeDeploymentBucketName:
+    Value: !Ref GraphQlResumeDeploymentBucket
+  LatestTimeStamp:
+    Value: !Ref TimeStamp
+  ResumeHandlerLogGroupArn:
+    Value: !GetAtt ResumeHandlerLogGroup.Arn
+  TestAuthLogGroupArn:
+    Value: !GetAtt TestAuthLogGroup.Arn
+  DynamoTableArn:
+    Value: !GetAtt ResumeDb.Arn
+  TestAuthLambdaFunctionName:
+    Value: !Ref TestAuthLambdaFunction
+  TestAuthLambdaFunctionQualifiedArn:
+    Description: Current Lambda function version
+    Value: !Ref TestAuthLambdaVersion
+  ResumeHandlerLambdaFunctionName:
+    Value: !Ref ResumeHandlerLambdaFunction
+  ResumeHandlerLambdaFunctionQualifiedArn:
+    Description: Current Lambda function version
+    Value: !Ref ResumeHandlerLambdaVersion
+  ServiceEndpoint:
+    Description: URL of the service endpoint
+    Value:
+      - !Sub
+        - https://${ApiGateway}.execute-api.${Region}.com/${Stage}
+        - !Ref ApiGatewayRestApi

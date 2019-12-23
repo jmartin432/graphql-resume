@@ -7,8 +7,10 @@
     "test": "echo \"No Tests Yet\" && exit 1",
     "lint": "standard",
     "fixStyle": "standard --fix",
-    "devDeploy": "sls deploy --stage dev",
-    "prodDeploy": "sls deploy --stage prod"
+    "updateStack": "sh ./scripts/updateStack.sh",
+    "createStack": "sh ./scripts/createStack.sh",
+    "deleteStack": "sh ./scripts/deleteStack.sh",
+    "describeStack": "sh ./scripts/describeStack.sh"
   },
   "author": "Justin L Martin",
   "dependencies": {

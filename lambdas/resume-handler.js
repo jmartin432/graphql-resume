@@ -1,19 +1,19 @@
 'use strict'
 
-const graphql = require('graphql')
+const resumeHandler = require('graphql')
 const schema = require('./lib/schema')
 
 function runQuery (query, claims, variables) {
   if (claims === null) {
-    return graphql.graphql(schema.PublicSchema, query, {}, null, variables)
+    return resumeHandler.graphql(schema.PublicSchema, query, {}, null, variables)
   }
-  return graphql.graphql(schema.PrivateSchema, query, {claims: claims}, null, variables)
+  return resumeHandler.graphql(schema.PrivateSchema, query, {claims: claims}, null, variables)
 }
 
 module.exports.handler = (event, context, cb) => {
   console.log('Received event', JSON.stringify(event))
 
-  var claims = null
+  let claims = null
   if (event.requestContext.authorizer) {
     claims = event.requestContext.authorizer.claims;
     console.log(`Event from user ${claims['cognito:username']} with ID ${claims.sub}`)

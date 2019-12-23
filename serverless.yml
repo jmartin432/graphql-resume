@@ -43,7 +43,7 @@ provider:
 
 functions:
   test-auth:
-    handler: src/test-auth.handler
+    handler: lambdas/test-auth.handler
     events:
       - http:
           cors: true
@@ -54,7 +54,7 @@ functions:
           path: /test-auth
           method: get
   graph-ql:
-    handler: src/graph-ql.handler
+    handler: lambdas/graph-ql.handler
     events:
       - http:
           cors: true

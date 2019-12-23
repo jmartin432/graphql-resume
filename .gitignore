@@ -2,3 +2,5 @@
 /node_modules/
 /arn.json
 /env.yml
+/scripts/
+/secrets.yml
