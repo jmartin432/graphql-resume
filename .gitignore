@@ -4,3 +4,4 @@
 /env.yml
 /scripts/
 /secrets.yml
+/lambdas/node_modules/
