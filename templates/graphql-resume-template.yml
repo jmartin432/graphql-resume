@@ -32,10 +32,10 @@ Mappings:
       Name: '{{resolve:ssm:GraphQl-Resume-Deployment-Bucket-Prod:1}}'
   CognitoPoolArnMap:
     dev:
-      Name: test
-#      Name: '{{resolve:ssm:GraphQl-Resume-Cognito-Pool-Arn-Dev:1}}'
+      Arns: '{{resolve:ssm:GraphQl-Resume-Cognito-Pool-Arn-Dev:1}}'
     prod:
-      Name: test
+      Arns:
+      - test
 #      Name: '{{resolve:ssm:GraphQl-Resume-Cognito-Pool-Arn-Prod:1}}'
 
 Resources:
@@ -163,7 +163,7 @@ Resources:
       Environment:
         Variables:
           RESUME_DB: !Ref ResumeDb
-          COGNITO_POOL_ARN: !FindInMap [CognitoPoolArnMap, !Ref Stage, Name]
+          COGNITO_POOL_ARN: !FindInMap [CognitoPoolArnMap, !Ref Stage, Arns]
     DependsOn:
       - TestAuthLogGroup
       - IamRoleLambdaExecution
@@ -190,7 +190,7 @@ Resources:
       Environment:
         Variables:
           RESUME_DB: !Ref ResumeDb
-          COGNITO_POOL_ARN: !FindInMap [CognitoPoolArnMap, !Ref Stage, Name]
+          COGNITO_POOL_ARN: !FindInMap [CognitoPoolArnMap, !Ref Stage, Arns]
     DependsOn:
       - TestAuthLogGroup
       - IamRoleLambdaExecution
@@ -215,52 +215,48 @@ Resources:
     Properties:
       ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
       PathPart: test-auth
-      RestApiId:
-        Ref: ApiGatewayRestApi
+      RestApiId: !Ref ApiGatewayRestApi
 
   ApiGatewayResourceResumeHandler:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
       PathPart: resume-handler
-      RestApiId:
-        Ref: ApiGatewayRestApi
+      RestApiId: !Ref ApiGatewayRestApi
 
   ApiGatewayResourceReadResumeHandler:
     Type: AWS::ApiGateway::Resource
     Properties:
       ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
       PathPart: read-resume-handler
-      RestApiId:
-        Ref: ApiGatewayRestApi
+      RestApiId: !Ref ApiGatewayRestApi
 
   ApiGatewayMethodTestAuthOptions:
     Type: AWS::ApiGateway::Method
     Properties:
       AuthorizationType: NONE
       HttpMethod: OPTIONS
-        StatusCode: 200
-        ResponseParameters:
-          method.response.header.Access-Control-Allow-Origin: true
-          method.response.header.Access-Control-Allow-Headers: true
-          method.response.header.Access-Control-Allow-Methods: true
-          method.response.header.Access-Control-Allow-Credentials: true
-        ResponseModels:
-      RequestParameters:
+      MethodResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
+            method.response.header.Access-Control-Allow-Headers: true
+            method.response.header.Access-Control-Allow-Methods: true
+            method.response.header.Access-Control-Allow-Credentials: true
       Integration:
         Type: MOCK
         RequestTemplates:
-          application/json: statusCode:200
+          application/json: "{statusCode: 200}"
         ContentHandling: CONVERT_TO_TEXT
         IntegrationResponses:
-          StatusCode: 200
-          ResponseParameters:
-            method.response.header.Access-Control-Allow-Origin: '*'
-            method.response.header.Access-Control-Allow-Headers: 'Content-TypeX-Amz-DateAuthorizationX-Api-KeyX-Amz-Security-TokenX-Amz-User-Agent'
-            method.response.header.Access-Control-Allow-Methods: 'OPTIONSGET'
-            method.response.header.Access-Control-Allow-Credentials: 'false'
-          ResponseTemplates:
-            application/json: #set($origin = $input.params(\Origin\))\n#if($origin == \\) #set($origin = $input.params(\origin\)) #end\n#if($origin.matches(\.*\)) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-TypeX-Amz-DateAuthorizationX-Api-KeyX-Amz-Security-TokenX-Amz-User-Agent'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Credentials: "'false'"
+            ResponseTemplates:
+              application/json: "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".*\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
       ResourceId: !Ref ApiGatewayResourceTestAuth
       RestApiId: !Ref ApiGatewayRestApi
 
@@ -270,30 +266,26 @@ Resources:
       AuthorizationType: NONE
       HttpMethod: OPTIONS
       MethodResponses:
-        StatusCode: 200
-        ResponseParameters:
-          - method.response.header.Access-Control-Allow-Origin: true
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Credentials: true
-        ResponseModels:
-      RequestParameters:
       Integration:
         Type: MOCK
         RequestTemplates:
-          application/json: statusCode:200
+          application/json: "{statusCode: 200}"
         ContentHandling: CONVERT_TO_TEXT
         IntegrationResponses:
-          StatusCode: 200
-          ResponseParameters:
-            - method.response.header.Access-Control-Allow-Origin: *
-              method.response.header.Access-Control-Allow-Headers: Content-TypeX-Amz-DateAuthorizationX-Api-KeyX-Amz-Security-TokenX-Amz-User-Agent
-              method.response.header.Access-Control-Allow-Methods:
-               - OPTIONS
-               - POST
-              method.response.header.Access-Control-Allow-Credentials: false
-          ResponseTemplates:
-            application/json: #set($origin = $input.params(\Origin\))\n#if($origin == \\) #set($origin = $input.params(\origin\)) #end\n#if($origin.matches(\.*\)) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-TypeX-Amz-DateAuthorizationX-Api-KeyX-Amz-Security-TokenX-Amz-User-Agent'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Credentials: "'false'"
+            ResponseTemplates:
+              application/json: "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".*\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
       ResourceId: !Ref ApiGatewayResourceResumeHandler
       RestApiId: !Ref ApiGatewayRestApi
 
@@ -303,30 +295,26 @@ Resources:
       AuthorizationType: NONE
       HttpMethod: OPTIONS
       MethodResponses:
-        StatusCode: 200
-        ResponseParameters:
-          - method.response.header.Access-Control-Allow-Origin: true
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: true
             method.response.header.Access-Control-Allow-Headers: true
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Credentials: true
-        ResponseModels:
-      RequestParameters:
       Integration:
         Type: MOCK
         RequestTemplates:
-          application/json: statusCode:200
+          application/json: "{statusCode: 200}"
         ContentHandling: CONVERT_TO_TEXT
         IntegrationResponses:
-          StatusCode: 200
-          ResponseParameters:
-            - method.response.header.Access-Control-Allow-Origin: *
-              method.response.header.Access-Control-Allow-Headers: Content-TypeX-Amz-DateAuthorizationX-Api-KeyX-Amz-Security-TokenX-Amz-User-Agent
-              method.response.header.Access-Control-Allow-Methods:
-               - OPTIONS
-               - POST
-              method.response.header.Access-Control-Allow-Credentials: false
-          ResponseTemplates:
-            application/json: #set($origin = $input.params(\Origin\))\n#if($origin == \\) #set($origin = $input.params(\origin\)) #end\n#if($origin.matches(\.*\)) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end
+          - StatusCode: 200
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+              method.response.header.Access-Control-Allow-Headers: "'Content-TypeX-Amz-DateAuthorizationX-Api-KeyX-Amz-Security-TokenX-Amz-User-Agent'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Credentials: "'false'"
+            ResponseTemplates:
+              application/json: "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".*\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
       ResourceId: !Ref ApiGatewayResourceReadResumeHandler
       RestApiId: !Ref ApiGatewayRestApi
 
@@ -334,7 +322,6 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       HttpMethod: GET
-      RequestParameters:
       ResourceId: !Ref ApiGatewayResourceTestAuth
       RestApiId: !Ref ApiGatewayRestApi
       ApiKeyRequired: false
@@ -344,10 +331,9 @@ Resources:
         IntegrationHttpMethod: POST
         Type: AWS_PROXY
         Uri:
-          - !Sub
+          !Sub
             - arn:aws:apigateway:${Region}:lambda:path/2015-03-31/functions/${TestAuthLambdaArn}/invocations
-            - { TestAuthLambdaArn: !GetAtt TestAuthLambda.Arn }
-      MethodResponses:
+            - { TestAuthLambdaArn: !GetAtt TestAuthLambdaFunction.Arn }
     DependsOn: PoolAuthApiGatewayAuthorizer
 
 
@@ -355,7 +341,6 @@ Resources:
     Type: AWS::ApiGateway::Method
     Properties:
       HttpMethod: POST
-      RequestParameters:
       ResourceId: !Ref ApiGatewayResourceResumeHandler
       RestApiId: !Ref ApiGatewayRestApi
       ApiKeyRequired: false
@@ -365,17 +350,15 @@ Resources:
         IntegrationHttpMethod: POST
         Type: AWS_PROXY
         Uri:
-          - !Sub
+          !Sub
             - arn:aws:apigateway:${Region}:lambda:path/2015-03-31/functions/${ResumeHandlerLambdaArn}/invocations
-            - { ResumeHandlerLambdaArn: !GetAtt ResumeHandlerLambda.Arn }
-      MethodResponses:
+            - { ResumeHandlerLambdaArn: !GetAtt ResumeHandlerLambdaFunction.Arn }
     DependsOn: PoolAuthApiGatewayAuthorizer
 
   ApiGatewayMethodReadResumeHandlerPost:
     Type: AWS::ApiGateway::Method
     Properties:
       HttpMethod: POST
-      RequestParameters:
       ResourceId: !Ref ApiGatewayResourceReadResumeHandler
       RestApiId: !Ref ApiGatewayRestApi
       ApiKeyRequired: false
@@ -384,10 +367,9 @@ Resources:
         IntegrationHttpMethod: POST
         Type: AWS_PROXY
         Uri:
-          - !Sub
+          !Sub
             - arn:aws:apigateway:${Region}:lambda:path/2015-03-31/functions/${ResumeHandlerLambdaArn}/invocations
-            - { ResumeHandlerLambdaArn: !GetAtt ResumeHandlerLambda.Arn }
-      MethodResponses:
+            - { ResumeHandlerLambdaArn: !GetAtt ResumeHandlerLambdaFunction.Arn }
 
   PoolAuthApiGatewayAuthorizer:
     Type: AWS::ApiGateway::Authorizer
@@ -397,7 +379,8 @@ Resources:
       Name: pool_auth
       RestApiId: !Ref ApiGatewayRestApi
       Type: COGNITO_USER_POOLS
-      ProviderARNs: !FindInMap [CognitoPoolArnMap, !Ref Stage, Name]
+      ProviderARNs:
+        - !FindInMap [CognitoPoolArnMap, !Ref Stage, Arns]
 
   ApiGatewayDeployment:
     Type: AWS::ApiGateway::Deployment
@@ -407,7 +390,7 @@ Resources:
     DependsOn:
       - ApiGatewayMethodTestAuthOptions
       - ApiGatewayMethodResumeHandlerOptions
-      - ApiGatewayMethodReadResumehandlerOptions
+      - ApiGatewayMethodReadResumeHandlerOptions
       - ApiGatewayMethodTestAuthGet
       - ApiGatewayMethodResumeHandlerPost
       - ApiGatewayMethodReadResumeHandlerPost
@@ -419,9 +402,9 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn:
-        - !Sub
+        !Sub
           - arn:aws:execute-api:${Region}:${AccountId}:${ApiGateway}/*/*
-          - !Ref ApiGatewayRestApi
+          - { ApiGateway: !Ref ApiGatewayRestApi }
 
   ResumeHandlerLambdaPermissionApiGateway:
     Type: AWS::Lambda::Permission
@@ -430,9 +413,9 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn:
-        - !Sub
+        !Sub
           - arn:aws:execute-api:${Region}:${AccountId}:${ApiGateway}/*/*
-          - !Ref ApiGatewayRestApi
+          - { ApiGateway: !Ref ApiGatewayRestApi }
 
 Outputs:
   GraphQlResumeDeploymentBucketName:
@@ -458,6 +441,6 @@ Outputs:
   ServiceEndpoint:
     Description: URL of the service endpoint
     Value:
-      - !Sub
+      !Sub
         - https://${ApiGateway}.execute-api.${Region}.com/${Stage}
-        - !Ref ApiGatewayRestApi
+        - { ApiGateway: !Ref ApiGatewayRestApi }

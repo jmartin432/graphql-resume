@@ -1,3 +1,0 @@
-Command for running python server locally: python -m SimpleHTTPServer
-
-CloudDistributions are always in hosted zone Z2FDTNDATAQYW2
