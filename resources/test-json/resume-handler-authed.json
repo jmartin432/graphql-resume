@@ -1,7 +1,7 @@
 {
-    "resource": "/test-auth",
-    "path": "/test-auth",
-    "httpMethod": "GET",
+    "resource": "/resume-handler",
+    "path": "/resume-handler",
+    "httpMethod": "POST",
     "headers": {
         "Accept": "application/json",
         "Authorization": "test.jwt.token",
@@ -11,12 +11,13 @@
         "CloudFront-Is-SmartTV-Viewer": "false",
         "CloudFront-Is-Tablet-Viewer": "false",
         "CloudFront-Viewer-Country": "US",
+        "Content-Type": "application/json",
         "Host": "abc123456.execute-api.us-west-2.amazonaws.com",
         "User-Agent": "insomnia/7.0.3",
         "Via": "1.1 2bedbeaa49b4a77447d30097858cb81a.cloudfront.net (CloudFront)",
-        "X-Amz-Cf-Id": "aQ6qMDO9BO0_UmO3iOxIRrmBjlXSWksU5KNFFgLuThQ5Qs7oCMOepg==",
-        "X-Amzn-Trace-Id": "Root=1-5e02bcfb-dc4081c039dcf9c0d63f3750",
-        "X-Forwarded-For": "97.120.9.165, 64.252.141.141",
+        "X-Amz-Cf-Id": "sEDwzEojD1s-6CoKTovEY2vEqb5wdfh4Gtou3tPV-dw0jA6EpGpC2g==",
+        "X-Amzn-Trace-Id": "Root=1-5e02bd61-87e59616fda8a2e664291902",
+        "X-Forwarded-For": "97.120.9.165, 64.252.141.131",
         "X-Forwarded-Port": "443",
         "X-Forwarded-Proto": "https"
     },
@@ -45,6 +46,9 @@
         "CloudFront-Viewer-Country": [
             "US"
         ],
+        "Content-Type": [
+            "application/json"
+        ],
         "Host": [
             "abc123456.execute-api.us-west-2.amazonaws.com"
         ],
@@ -55,13 +59,13 @@
             "1.1 2bedbeaa49b4a77447d30097858cb81a.cloudfront.net (CloudFront)"
         ],
         "X-Amz-Cf-Id": [
-            "aQ6qMDO9BO0_UmO3iOxIRrmBjlXSWksU5KNFFgLuThQ5Qs7oCMOepg=="
+            "sEDwzEojD1s-6CoKTovEY2vEqb5wdfh4Gtou3tPV-dw0jA6EpGpC2g=="
         ],
         "X-Amzn-Trace-Id": [
-            "Root=1-5e02bcfb-dc4081c039dcf9c0d63f3750"
+            "Root=1-5e02bd61-87e59616fda8a2e664291902"
         ],
         "X-Forwarded-For": [
-            "97.120.9.165, 64.252.141.141"
+            "97.120.9.165, 64.252.141.131"
         ],
         "X-Forwarded-Port": [
             "443"
@@ -75,34 +79,34 @@
     "pathParameters": null,
     "stageVariables": null,
     "requestContext": {
-        "resourceId": "n3hdy5",
+        "resourceId": "2vg0py",
         "authorizer": {
             "claims": {
                 "sub": "c9225bd8-07e3-4365-93db-b1a43b5ca056",
                 "aud": "1f2gnqnh40onr6mp1dka848j5o",
                 "email_verified": "false",
-                "event_id": "b9bfa6b8-2700-4472-bda9-07c190616b4d",
+                "event_id": "31132771-d526-421b-8ad9-094053aa95ae",
                 "token_use": "id",
-                "auth_time": "1577235453",
+                "auth_time": "1577237842",
                 "iss": "https://cognito-idp.us-west-2.amazonaws.com/us-west-2_abc12345",
                 "name": "Tester",
                 "cognito:username": "testuser",
-                "exp": "Wed Dec 25 01:57:33 UTC 2019",
-                "iat": "Wed Dec 25 00:57:33 UTC 2019",
+                "exp": "Wed Dec 25 02:37:22 UTC 2019",
+                "iat": "Wed Dec 25 01:37:22 UTC 2019",
                 "email": "test@test.com"
             }
         },
-        "resourcePath": "/test-auth",
-        "httpMethod": "GET",
-        "extendedRequestId": "FPJ3YG8DvHcF0FA=",
-        "requestTime": "25/Dec/2019:01:35:55 +0000",
-        "path": "/dev/test-auth",
-        "accountId": "1234567890",
+        "resourcePath": "/resume-handler",
+        "httpMethod": "POST",
+        "extendedRequestId": "FPKHSEgUvHcFTeg=",
+        "requestTime": "25/Dec/2019:01:37:37 +0000",
+        "path": "/dev/resume-handler",
+        "accountId": "406135181037",
         "protocol": "HTTP/1.1",
         "stage": "dev",
         "domainPrefix": "abc123456",
-        "requestTimeEpoch": 1577237755981,
-        "requestId": "b3936af7-3452-4fcb-b624-12462345bfd5",
+        "requestTimeEpoch": 1577237857795,
+        "requestId": "51908b55-4e6f-4401-a1f8-d79e9ff47281",
         "identity": {
             "cognitoIdentityPoolId": null,
             "accountId": null,
@@ -120,6 +124,6 @@
         "domainName": "abc123456.execute-api.us-west-2.amazonaws.com",
         "apiId": "abc123456"
     },
-    "body": null,
+    "body": "{\"query\":\"query fieldItems($field: String!) {\\n  fieldItems(field: $field) {\\n    userId\\n    itemId\\n    field\\n    name\\n    website\\n    email\\n    phoneNumber\\n    location\\n    award\\n    bulletPoints\\n    summary\\n  }\\n}\\n\",\"variables\":{\"field\":\"summary\"},\"operationName\":\"fieldItems\"}",
     "isBase64Encoded": false
 }

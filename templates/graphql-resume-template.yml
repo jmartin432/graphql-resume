@@ -150,12 +150,23 @@ Resources:
       - TestAuthLogGroup
       - IamRoleLambdaExecution
 
-  TestAuthLambdaVersion:
-    Type: AWS::Lambda::Version
-    DeletionPolicy: Retain
+  TestAuthLambdaPermissionApiGateway:
+    Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref TestAuthLambdaFunction
-      Description: Test authorization for GraphQl API
+      FunctionName: !GetAtt TestAuthLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        !Sub
+        - arn:aws:execute-api:${Region}:${AccountId}:${ApiGateway}/*/*/*
+        - { ApiGateway: !Ref ApiGatewayRestApi }
+
+#  TestAuthLambdaVersion:
+#    Type: AWS::Lambda::Version
+#    DeletionPolicy: Retain
+#    Properties:
+#      FunctionName: !Ref TestAuthLambdaFunction
+#      Description: Test authorization for GraphQl API
 
   ResumeHandlerLogGroup:
     Type: AWS::Logs::LogGroup
@@ -182,12 +193,23 @@ Resources:
       - ResumeHandlerLogGroup
       - IamRoleLambdaExecution
 
-  ResumeHandlerLambdaVersion:
-    Type: AWS::Lambda::Version
-    DeletionPolicy: Retain
+  ResumeHandlerLambdaPermissionApiGateway:
+    Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !Ref ResumeHandlerLambdaFunction
-      Description: Resume handler for GraphQl API
+      FunctionName: !GetAtt ResumeHandlerLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        !Sub
+        - arn:aws:execute-api:${Region}:${AccountId}:${ApiGateway}/*/*/*
+        - { ApiGateway: !Ref ApiGatewayRestApi }
+
+#  ResumeHandlerLambdaVersion:
+#    Type: AWS::Lambda::Version
+#    DeletionPolicy: Retain
+#    Properties:
+#      FunctionName: !Ref ResumeHandlerLambdaFunction
+#      Description: Resume handler for GraphQl API
 
   ApiLoggingRole:
     Type: AWS::IAM::Role
@@ -426,28 +448,6 @@ Resources:
       - ApiGatewayMethodReadResumeHandlerPost
       - ApiAccount
 
-  TestAuthLambdaPermissionApiGateway:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt TestAuthLambdaFunction.Arn
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn:
-        !Sub
-          - arn:aws:execute-api:${Region}:${AccountId}:${ApiGateway}/*/*
-          - { ApiGateway: !Ref ApiGatewayRestApi }
-
-  ResumeHandlerLambdaPermissionApiGateway:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt ResumeHandlerLambdaFunction.Arn
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn:
-        !Sub
-          - arn:aws:execute-api:${Region}:${AccountId}:${ApiGateway}/*/*
-          - { ApiGateway: !Ref ApiGatewayRestApi }
-
 Outputs:
   GraphQlResumeDeploymentBucketName:
     Value: !Ref GraphQlResumeDeploymentBucket
@@ -461,14 +461,18 @@ Outputs:
     Value: !GetAtt ResumeDb.Arn
   TestAuthLambdaFunctionName:
     Value: !Ref TestAuthLambdaFunction
-  TestAuthLambdaFunctionQualifiedArn:
-    Description: Current Lambda function version
-    Value: !Ref TestAuthLambdaVersion
+  TestAuthLambdaFunctionArn:
+    Value: !GetAtt TestAuthLambdaFunction.Arn
+#  TestAuthLambdaFunctionQualifiedArn:
+#    Description: Current Lambda function version
+#    Value: !Ref TestAuthLambdaVersion
   ResumeHandlerLambdaFunctionName:
     Value: !Ref ResumeHandlerLambdaFunction
-  ResumeHandlerLambdaFunctionQualifiedArn:
-    Description: Current Lambda function version
-    Value: !Ref ResumeHandlerLambdaVersion
+  ResumeHandlerLambdaFunctionArn:
+    Value: !GetAtt ResumeHandlerLambdaFunction.Arn
+#  ResumeHandlerLambdaFunctionQualifiedArn:
+#    Description: Current Lambda function version
+#    Value: !Ref ResumeHandlerLambdaVersion
   ServiceEndpoint:
     Description: URL of the service endpoint
     Value:

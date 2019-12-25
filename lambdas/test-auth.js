@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports.handler = (event, context, callback) => {
-    console.log('Received Event: ', event);
+    console.log('Received Event: ', JSON.stringify(event));
     const response = {
         message: `Hello there, ${event.requestContext.authorizer.claims.name}, your user ID is ${event.requestContext.authorizer.claims.sub}`,
         method: `This is an authorized ${event.httpMethod} to Lambda from your API`,
@@ -16,5 +16,4 @@ module.exports.handler = (event, context, callback) => {
             body: JSON.stringify(response)
         }
     )
-  //test comment
 };
