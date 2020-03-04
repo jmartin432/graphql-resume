@@ -37,7 +37,8 @@ function buildItem(userId, itemId, args) {
     endDate: args.item.endDate,
     award: args.item.award,
     bulletPoints: args.item.bulletPoints,
-    additionalInfo: args.item.additionalInfo
+    additionalInfo: args.item.additionalInfo,
+    summary: args.item.summary
   }
 }
 
