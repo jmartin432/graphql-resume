@@ -7,17 +7,17 @@
     "test": "echo \"No Tests Yet\" && exit 1",
     "lint": "standard",
     "fixStyle": "standard --fix",
-    "updateStack": "sh ./scripts/updateStack.sh",
-    "createStack": "sh ./scripts/createStack.sh",
-    "deleteStack": "sh ./scripts/deleteStack.sh",
-    "describeStack": "sh ./scripts/describeStack.sh"
+    "update-stack": "sh scripts/update-stack.sh",
+    "create-stack": "sh scripts/create-stack.sh",
+    "delete-stack": "sh scripts/delete-stack.sh",
+    "describe-stack": "sh scripts/describe-stack.sh"
   },
   "author": "Justin L Martin",
   "dependencies": {
-    "aws-sdk": "~2.36.0",
-    "graphql": "^14.5.8",
-    "lodash": "~4.17.15",
-    "uuid": "~3.3.3"
+    "aws-sdk": "^2.724.0",
+    "graphql": "^15.3.0",
+    "lodash": "^4.17.19",
+    "uuid": "^8.3.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",

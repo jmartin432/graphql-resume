@@ -7,9 +7,6 @@ Parameters:
     Default: us-west-2
   TimeStamp:
     Type: String
-  AccountId:
-    Type: String
-    Default: '{{resolve:ssm:Account-ID:1}}'
   Stage:
     Type: String
     AllowedValues:
@@ -22,19 +19,19 @@ Parameters:
     Default: graphql-resume
 
 Mappings:
-  DeploymentBucketMap:
+  LambdasBucketMap:
     dev:
-      Name: '{{resolve:ssm:GraphQL-Resume-Deployment-Bucket-Dev:1}}'
+      Name: '{{resolve:ssm:graphql-resume-dev-lambdas-bucket:1}}'
     prod:
-      Name: '{{resolve:ssm:GraphQL-Resume-Deployment-Bucket-Prod:1}}'
+      Name: '{{resolve:ssm:graphql-resume-prod-lambdas-bucket:1}}'
 
 Resources:
-  GraphQlResumeDeploymentBucket:
+  LambdasBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName:
         Fn::FindInMap:
-          - DeploymentBucketMap
+          - LambdasBucketMap
           - Ref: Stage
           - Name
       VersioningConfiguration:
@@ -43,7 +40,3 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-
-Outputs:
-  GraphQlResumeDeploymentBucketName:
-    Value: !Ref GraphQlResumeDeploymentBucket
