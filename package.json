@@ -16,7 +16,7 @@
   "dependencies": {
     "aws-sdk": "^2.724.0",
     "graphql": "^15.3.0",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "uuid": "^8.3.0"
   },
   "devDependencies": {
